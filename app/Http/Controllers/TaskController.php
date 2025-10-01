@@ -56,7 +56,18 @@ class TaskController extends Controller
 
         // Kirim notifikasi (email & Telegram)
         // auth()->user()->notify(new \App\Notifications\TaskCreatedNotification($task));
-        app(\App\Notifications\TaskCreatedNotification::class, ['task'=>$task])->sendTelegram();
+        // app(\App\Notifications\TaskCreatedNotification::class, ['task'=>$task])->sendTelegram();
+
+        // setelah create task
+        $notif = new \App\Notifications\TaskCreatedNotification($task);
+        auth()->user()->notify($notif);
+
+        // kirim Telegram (opsional)
+        $chatId = auth()->user()->telegram_chat_id ?? \Config('telegram.chat_id'); // kalau kamu simpan per user
+        app(\App\Services\TelegramService::class)->sendMessage(
+            "📝 Task baru: {$task->title}\nDue: ".($task->due_date ? $task->due_date->format('d M Y') : '-'),
+            $chatId // boleh null: fallback pakai TELEGRAM_CHAT_ID dari .env
+        );
 
         return redirect()->route('tasks.index')->with('success','Task created.');
     }

@@ -20,3 +20,11 @@ Route::middleware('auth')->group(function(){
     Route::resource('categories', CategoryController::class)->except(['show']);
     Route::resource('tasks', TaskController::class);
 });
+Route::get('/debug/telegram', function () {
+    $text = '🔔 Test Telegram at '.now()->toDateTimeString();
+    $chatId = auth()->user()->telegram_chat_id ?? null;
+
+    $result = app(\App\Services\TelegramService::class)->sendMessage($text, $chatId);
+
+    dd($result); // lihat status/body di browser
+})->middleware('auth');

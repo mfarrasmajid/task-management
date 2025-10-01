@@ -8,16 +8,22 @@ use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 use App\Models\Task;
 use App\Services\TelegramService;
+use Illuminate\Support\Facades\Http;
 
 class TaskCreatedNotification extends Notification
 {
-     use Queueable;
+    use Queueable;
 
-    public function __construct(public Task $task){}
+    protected $task;
+
+    public function __construct(Task $task)
+    {
+        $this->task = $task; // <-- assign manual (tanpa property promotion)
+    }
 
     public function via($notifiable)
     {
-        return ['mail', 'database']; // simpan ke DB juga (opsional)
+        return ['database']; // simpan ke DB juga (opsional)
     }
 
     public function toMail($notifiable)
@@ -43,13 +49,27 @@ class TaskCreatedNotification extends Notification
     }
 
     // Kirim Telegram segera setelah notifikasi dibuat
-    public function sendTelegram()
+    public function sendMessage($text, $chatId = null)
     {
-        app(TelegramService::class)->sendMessage(
-            "<b>New Task</b>\n".
-            "Title: {$this->task->title}\n".
-            "Due: ".($this->task->due_date? $this->task->due_date->format('d M Y'):'-')
-        );
+        $token  = config('services.telegram.bot_token');
+        $chatId = $chatId ?: config('services.telegram.chat_id');
+
+        if (!$token || !$chatId) {
+            return false;
+        }
+
+        $url  = "https://api.telegram.org/bot{$token}/sendMessage";
+        $http = Http::withOptions(['timeout' => 10]);
+        if (app()->environment('local')) {
+            $http = $http->withoutVerifying(); // <- bypass verifikasi SSL (dev only)
+        }
+        $resp = $http->post($url, [
+            'chat_id'    => $chatId,
+            'text'       => $text,
+            'parse_mode' => 'HTML',
+        ]);
+
+        return $resp->ok();
     }
 
     public function afterCommit(): void

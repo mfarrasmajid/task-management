@@ -11,8 +11,10 @@
   <div class="form-group col-md-4">
     <label>Status</label>
     <select name="status" class="form-control" required>
-      @foreach(['todo'=>'To Do','in_progress'=>'In Progress','done'=>'Done'] as $k=>$v)
-        <option value="{{ $k }}" @selected(old('status',$task->status ?? 'todo')==$k)>{{ $v }}</option>
+      @foreach(['todo'=>'To Do','in_progress'=>'In Progress','done'=>'Done'] as $k => $v)
+        <option value="{{ $k }}" {{ old('status', $task->status ?? 'todo') == $k ? 'selected' : '' }}>
+          {{ $v }}
+        </option>
       @endforeach
     </select>
   </div>
@@ -21,7 +23,9 @@
     <select name="category_id" class="form-control">
       <option value="">-- None --</option>
       @foreach($categories as $c)
-        <option value="{{ $c->id }}" @selected(old('category_id',$task->category_id ?? '')==$c->id)>{{ $c->name }}</option>
+        <option value="{{ $c->id }}" {{ old('category_id', $task->category_id ?? '') == $c->id ? 'selected' : '' }}>
+          {{ $c->name }}
+        </option>
       @endforeach
     </select>
   </div>
